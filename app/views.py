@@ -44,30 +44,21 @@ def upload():
     return render_template("upload.html", form=photoform)
 
 def get_uploaded_images():
-    rootdir = os.getcwd()
-    print(rootdir)
     filenames = []
-    for subdir, dirs, files in os.walk(rootdir + '/uploads'):
+    for subdir, dirs, files in os.walk(app.config['UPLOAD_FOLDER']):
         for file in files:
-            filenames.append(os.path.join(subdir, file))
+            filenames.append(file)
     print(filenames)
     return filenames
 
 @app.route("/uploads/<filename>")
 def get_image(filename):
-    uploads_dir = os.path.join(os.getcwd(), "uploads")
-    return send_from_directory(uploads_dir, filename)
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 @app.route("/files")
 @login_required
 def files():
-    filedirectories = get_uploaded_images()
-    filenames = []
-
-    for f in filedirectories:
-        if os.path.basename(f) == '.gitkeep':
-            continue
-        filenames.append(os.path.basename(f))
+    filenames = [f for f in get_uploaded_images() if f != '.gitkeep']
     print(filenames)
     return render_template('files.html', filenames=filenames)
 
