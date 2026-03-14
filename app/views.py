@@ -1,6 +1,6 @@
 import os
 from app import app, db, login_manager
-from flask import render_template, request, redirect, url_for, flash, session, abort
+from flask import render_template, request, redirect, url_for, flash, session, abort, send_from_directory
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.utils import secure_filename
 from werkzeug.security import check_password_hash
@@ -43,6 +43,33 @@ def upload():
         flash('File not saved', 'danger')
     return render_template("upload.html", form=photoform)
 
+def get_uploaded_images():
+    rootdir = os.getcwd()
+    print(rootdir)
+    filenames = []
+    for subdir, dirs, files in os.walk(rootdir + '/uploads'):
+        for file in files:
+            filenames.append(os.path.join(subdir, file))
+    print(filenames)
+    return filenames
+
+@app.route("/uploads/<filename>")
+def get_image(filename):
+    uploads_dir = os.path.join(os.getcwd(), "uploads")
+    return send_from_directory(uploads_dir, filename)
+
+@app.route("/files")
+@login_required
+def files():
+    filedirectories = get_uploaded_images()
+    filenames = []
+
+    for f in filedirectories:
+        if os.path.basename(f) == '.gitkeep':
+            continue
+        filenames.append(os.path.basename(f))
+    print(filenames)
+    return render_template('files.html', filenames=filenames)
 
 @app.route('/login', methods=['POST', 'GET'])
 def login():
@@ -75,11 +102,20 @@ def login():
         return redirect(url_for("home"))  # The user should be redirected to the upload form instead
     return render_template("login.html", form=form)
 
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash("Logged out successfully.", "success")
+    return redirect(url_for('home'))
+
 # user_loader callback. This callback is used to reload the user object from
 # the user ID stored in the session
 @login_manager.user_loader
 def load_user(id):
     return db.session.execute(db.select(UserProfile).filter_by(id=id)).scalar()
+
+
 
 ###
 # The functions below should be applicable to all Flask apps.
