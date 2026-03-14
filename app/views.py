@@ -39,7 +39,8 @@ def upload():
 
         flash('File Saved', 'success')
         return redirect(url_for('home')) # Update this to redirect the user to a route that displays all uploaded image files
-    
+    else:
+        flash('File not saved', 'danger')
     return render_template("upload.html", form=photoform)
 
 
